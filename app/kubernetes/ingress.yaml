@@ -3,7 +3,8 @@ kind: Ingress
 metadata:
   name: app-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+
+    # Rewrite removed so /api/data is passed through to backend correctly
     # Basic SSL redirect if we had Cert Manager
     # nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:

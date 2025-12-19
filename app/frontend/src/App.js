@@ -17,7 +17,7 @@ function App() {
         <p>
           Backend Status: {data ? "Connected" : "Loading..."}
         </p>
-        {data && <pre>{JSON.dumps(data, null, 2)}</pre>}
+        {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
       </header>
     </div>
   );
