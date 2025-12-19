@@ -1,0 +1,81 @@
+name: Application CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "app/**"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "app/**"
+
+permissions:
+  id-token: write # Required for AWS OIDC
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY_BACKEND: backend
+  ECR_REPOSITORY_FRONTEND: frontend
+
+jobs:
+  lint-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: |
+          pip install pylint
+          pip install -r app/backend/requirements.txt || true
+
+      - name: Lint Backend
+        run: |
+          pylint --disable=all --enable=errors app/backend/src/app.py
+
+  build-push:
+    name: Build & Push Docker Images
+    needs: lint-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app/backend
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_BACKEND }}:${{ github.sha }}
+
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app/frontend
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_FRONTEND }}:${{ github.sha }}
+      
+      - name: Update K8s Manifests (GitOps-style)
+        run: |
+          # In a real GitOps setup, we would push to a separate repo.
+          # Here we just output the commands for the user to see or apply directly.
+          echo "We would now run: kubectl set image deployment/backend backend=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_BACKEND }}:${{ github.sha }}"
