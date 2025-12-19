@@ -1,5 +1,4 @@
 from flask import Flask, jsonify
-from prometheus_client import DataCollectorRegistry, DispatcherMiddleware, prometheus_client
 from werkzeug.serving import run_simple
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from prometheus_client import make_wsgi_app
