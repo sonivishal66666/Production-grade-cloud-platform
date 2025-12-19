@@ -5,13 +5,13 @@ terraform {
       version = "~> 5.0"
     }
   }
-  # backend "s3" {
-  #   bucket         = "prod-furever-terraform-state"
-  #   key            = "prod/terraform.tfstate"
-  #   region         = "us-east-1"
-  #   dynamodb_table = "prod-furever-terraform-locks"
-  #   encrypt        = true
-  # }
+  backend "s3" {
+    bucket         = "prod-furever-terraform-state"
+    key            = "prod/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "prod-furever-terraform-locks"
+    encrypt        = true
+  }
 }
 
 # --- ECR Repositories ---
